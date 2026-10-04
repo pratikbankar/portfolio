@@ -108,3 +108,12 @@ export const sectionsSchema = z.strictObject(
 export const reorderSchema = z.strictObject({ ids: z.array(z.string()).max(500) });
 
 export const PROFILE_KEYS = Object.keys(profileSchema.shape) as Array<keyof z.infer<typeof profileSchema>>;
+
+export const contactSchema = z.object({
+  name: required(100),
+  email: str(200).email('Enter a valid email address'),
+  subject: optional(200),
+  message: str(5000).min(10, 'Please write at least 10 characters'),
+});
+
+export const messageReadSchema = z.strictObject({ read: z.boolean() });

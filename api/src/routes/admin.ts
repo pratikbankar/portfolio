@@ -17,6 +17,7 @@ import { buildDraft, getDashboard, publish } from '../services/publish.js';
 import { getProfile, getSections, saveProfile, saveSections } from '../services/singletons.js';
 import { crudRouter } from './crud.js';
 import { adminFilesRouter } from './files.js';
+import { adminMessagesRouter } from './messages.js';
 
 export function adminRouter(): Router {
   const router = Router();
@@ -31,6 +32,7 @@ export function adminRouter(): Router {
   router.use('/social-links', crudRouter(SocialLink, socialLinkSchema));
 
   router.use('/files', adminFilesRouter());
+  router.use('/messages', adminMessagesRouter());
 
   router.get('/profile', ah(async (_req, res) => res.json(await getProfile())));
   router.put('/profile', ah(async (req, res) => res.json(await saveProfile(parseBody(profileSchema, req.body)))));
