@@ -129,7 +129,7 @@ describe('publish flow', () => {
     const res = await agent.post('/api/admin/publish');
     expect(res.body.revalidated).toBe(true);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('http://localhost:3000/internal/revalidate');
+    expect(url).toBe('http://web.invalid/internal/revalidate');
     expect(init.method).toBe('POST');
     expect(init.headers['x-revalidate-secret']).toBe('test-revalidate-secret');
   });

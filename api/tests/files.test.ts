@@ -1,5 +1,5 @@
 import request from 'supertest';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { loginAgent, startTestApp, type TestApp } from './helpers.js';
 
 let t: TestApp;
@@ -14,6 +14,9 @@ afterAll(async () => {
 beforeEach(async () => {
   await t.reset();
   agent = await loginAgent(t.app);
+});
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 const PNG_HEADER = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -117,5 +120,62 @@ describe('file uploads', () => {
     expect(profile.resumeFileId).toBe('');
     const projects = (await agent.get('/api/admin/projects')).body;
     expect(projects.find((p: any) => p._id === project.body._id).imageFileIds).toEqual([keep]);
+  });
+});
+
+describe('files and the published site', () => {
+  beforeEach(() => {
+    // Publishing pings the web app; supertest does not use fetch, so stubbing it is safe here.
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 200 })));
+  });
+
+  const filesCollection = async () => (await import('mongoose')).default.connection.db!.collection('uploads.files');
+  const backdate = async (id: string) => {
+    const { default: mongoose } = await import('mongoose');
+    await (await filesCollection()).updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: { uploadDate: new Date(Date.now() - 48 * 60 * 60 * 1000) } },
+    );
+  };
+  const exists = async (id: string) => (await request(t.app).get(`/api/files/${id}`)).status === 200;
+
+  it('refuses to delete a file the live site still shows', async () => {
+    const photo = (await upload(png(), 'me.png', 'image/png')).body.id;
+    await agent.put('/api/admin/profile').send({ name: 'Pratik', photoFileId: photo });
+    await agent.post('/api/admin/publish');
+
+    const res = await agent.delete(`/api/admin/files/${photo}`);
+    expect(res.status).toBe(409);
+    expect(res.body.error.code).toBe('file_in_use');
+    expect(await exists(photo)).toBe(true);
+  });
+
+  it('keeps a replaced photo until the replacement is published, then removes it', async () => {
+    const oldPhoto = (await upload(png(), 'old.png', 'image/png')).body.id;
+    await agent.put('/api/admin/profile').send({ name: 'Pratik', photoFileId: oldPhoto });
+    await agent.post('/api/admin/publish');
+
+    const newPhoto = (await upload(png(), 'new.png', 'image/png')).body.id;
+    await agent.put('/api/admin/profile').send({ name: 'Pratik', photoFileId: newPhoto });
+    await backdate(oldPhoto);
+    // Not published yet: the live site still points at the old photo.
+    expect(await exists(oldPhoto)).toBe(true);
+
+    await agent.post('/api/admin/publish');
+    expect(await exists(oldPhoto)).toBe(false);
+    expect(await exists(newPhoto)).toBe(true);
+  });
+
+  it('does not remove a recent upload that has not been saved into a form yet', async () => {
+    const fresh = (await upload(png(), 'fresh.png', 'image/png')).body.id;
+    await agent.post('/api/admin/publish');
+    expect(await exists(fresh)).toBe(true);
+  });
+
+  it('removes old uploads that nothing refers to', async () => {
+    const orphan = (await upload(png(), 'orphan.png', 'image/png')).body.id;
+    await backdate(orphan);
+    await agent.post('/api/admin/publish');
+    expect(await exists(orphan)).toBe(false);
   });
 });

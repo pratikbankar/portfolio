@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { AppError } from '../errors.js';
 import { Profile } from '../models/Profile.js';
 import { Project } from '../models/Project.js';
+import { PublishedSnapshot } from '../models/PublishedSnapshot.js';
 
 const MB = 1024 * 1024;
 export const MAX_UPLOAD_BYTES = 10 * MB;
@@ -71,12 +72,19 @@ export async function openFile(id: string): Promise<OpenedFile | null> {
   };
 }
 
-/** Deletes the file and clears every reference to it, so nothing points at a missing file. */
+/**
+ * Deletes the file and clears every draft reference to it, so nothing points at a missing file.
+ * A file the published site still shows cannot be deleted: that would break the live page.
+ */
 export async function deleteFile(id: string): Promise<boolean> {
   const _id = toObjectId(id);
   if (!_id) return false;
   const [file] = await bucket().find({ _id }).limit(1).toArray();
   if (!file) return false;
+  const snapshot = await PublishedSnapshot.findOne({ key: 'main' }).lean();
+  if (snapshot && JSON.stringify(snapshot.content).includes(id)) {
+    throw new AppError(409, 'file_in_use', 'The live site still uses this file. Replace it and publish first.');
+  }
   await bucket().delete(_id);
   await Promise.all([
     Profile.updateMany({ photoFileId: id }, { $set: { photoFileId: '' } }),
@@ -84,4 +92,19 @@ export async function deleteFile(id: string): Promise<boolean> {
     Project.updateMany({ imageFileIds: id }, { $pull: { imageFileIds: id } }),
   ]);
   return true;
+}
+
+const UNUSED_GRACE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Removes uploads that the given content no longer refers to. Recent uploads are kept,
+ * because a file may be uploaded a moment before the form that uses it is saved.
+ */
+export async function removeUnusedFiles(content: unknown): Promise<number> {
+  const inUse = JSON.stringify(content);
+  const cutoff = new Date(Date.now() - UNUSED_GRACE_MS);
+  const stale = await bucket().find({ uploadDate: { $lt: cutoff } }).toArray();
+  const unused = stale.filter((f) => !inUse.includes(String(f._id)));
+  for (const file of unused) await bucket().delete(file._id);
+  return unused.length;
 }

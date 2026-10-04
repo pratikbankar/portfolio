@@ -10,6 +10,7 @@ import { PublishedSnapshot } from '../models/PublishedSnapshot.js';
 import { Skill } from '../models/Skill.js';
 import { SocialLink } from '../models/SocialLink.js';
 import type { SectionKey } from '../schemas.js';
+import { removeUnusedFiles } from './files.js';
 import { getProfile, getSections, type ProfileData } from './singletons.js';
 
 type Item = Record<string, unknown> & { _id: string };
@@ -74,6 +75,8 @@ export async function publish(): Promise<{ publishedAt: Date; revalidated: boole
     { $set: { content, publishedAt } },
     { upsert: true },
   );
+  // Draft and published content are now identical, so anything neither refers to is safe to remove.
+  await removeUnusedFiles(content).catch(() => 0);
   // The snapshot is already saved; a failed cache refresh must not fail the publish.
   return { publishedAt, revalidated: await revalidateWeb() };
 }
