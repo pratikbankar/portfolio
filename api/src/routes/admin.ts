@@ -15,6 +15,7 @@ import {
 } from '../schemas.js';
 import { getProfile, getSections, saveProfile, saveSections } from '../services/singletons.js';
 import { crudRouter } from './crud.js';
+import { adminFilesRouter } from './files.js';
 
 export function adminRouter(): Router {
   const router = Router();
@@ -27,6 +28,8 @@ export function adminRouter(): Router {
   router.use('/certifications', crudRouter(Certification, certificationSchema));
   router.use('/awards', crudRouter(Award, awardSchema));
   router.use('/social-links', crudRouter(SocialLink, socialLinkSchema));
+
+  router.use('/files', adminFilesRouter());
 
   router.get('/profile', ah(async (_req, res) => res.json(await getProfile())));
   router.put('/profile', ah(async (req, res) => res.json(await saveProfile(parseBody(profileSchema, req.body)))));
