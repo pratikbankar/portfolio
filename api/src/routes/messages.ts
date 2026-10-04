@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { Router } from 'express';
 import { config } from '../config.js';
 import { AppError, ah } from '../errors.js';
-import { createContactLimiter } from '../middleware/limits.js';
+import { createContactLimiter, visitorIp } from '../middleware/limits.js';
 import { parseBody } from '../middleware/validate.js';
 import { ContactMessage } from '../models/ContactMessage.js';
 import { contactSchema, messageReadSchema } from '../schemas.js';
@@ -30,7 +30,7 @@ export function contactRouter(): Router {
         return;
       }
       const data = parseBody(contactSchema, req.body);
-      const ipHash = createHash('sha256').update(`${config.JWT_SECRET}:${req.ip ?? ''}`).digest('hex');
+      const ipHash = createHash('sha256').update(`${config.JWT_SECRET}:${visitorIp(req)}`).digest('hex');
       await ContactMessage.create({ ...data, ipHash });
       res.json({ ok: true });
     }),

@@ -1,0 +1,31 @@
+# Render blueprint for the API. Create it from the Render dashboard: New > Blueprint > this repo.
+services:
+  - type: web
+    name: portfolio-api
+    runtime: node
+    plan: free
+    rootDir: api
+    # Dev dependencies are needed to compile TypeScript. The in-memory MongoDB used by the
+    # tests is never run here, so its binary download is skipped.
+    buildCommand: MONGOMS_DISABLE_POSTINSTALL=1 npm ci --include=dev && npm run build
+    # The seed is safe to run on every start: it creates the admin account and the initial
+    # content only when they are missing, and never overwrites edits.
+    startCommand: npm run seed:prod && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: WEB_ORIGIN
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: REVALIDATE_SECRET
+        generateValue: true

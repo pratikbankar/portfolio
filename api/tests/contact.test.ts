@@ -100,6 +100,18 @@ describe('contact form', () => {
   });
 });
 
+describe('contact rate limit behind the web proxy', () => {
+  // The web app proxies requests, so the API sees "visitor, proxy" in X-Forwarded-For.
+  const from = (visitor: string) =>
+    send(valid).set('x-test-ratelimit', '1').set('X-Forwarded-For', `${visitor}, 76.76.21.21`);
+
+  it('counts each visitor separately even though they share the proxy address', async () => {
+    for (let i = 0; i < 5; i++) expect((await from('203.0.113.7')).status).toBe(200);
+    expect((await from('203.0.113.7')).status).toBe(429);
+    expect((await from('198.51.100.9')).status).toBe(200);
+  });
+});
+
 describe('admin messages', () => {
   it('requires a session', async () => {
     expect((await request(t.app).get('/api/admin/messages')).status).toBe(401);
