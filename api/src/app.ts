@@ -4,6 +4,7 @@ import express, { type Express } from 'express';
 import helmet from 'helmet';
 import { config } from './config.js';
 import { errorHandler, notFound } from './errors.js';
+import { adminRouter } from './routes/admin.js';
 import { authRouter } from './routes/auth.js';
 
 export function createApp(): Express {
@@ -22,6 +23,7 @@ export function createApp(): Express {
   });
 
   app.use('/api/auth', authRouter());
+  app.use('/api/admin', adminRouter());
 
   app.use(notFound);
   app.use(errorHandler);
