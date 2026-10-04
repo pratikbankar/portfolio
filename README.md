@@ -133,25 +133,21 @@ The API was first planned for Render (`render.yaml` is kept for that option), bu
 for a card even on its free plan. Running it as a Vercel function needs no card and has no
 long sleep, at the cost of a 4 MB upload limit.
 
-**To deploy a change**, from the repository root:
-
-```bash
-cd api && npx vercel deploy --prod     # API
-cd web && npx vercel deploy --prod     # site and admin panel
-```
+**To deploy a change**, push to `main`. Both Vercel projects are connected to this repository
+and build automatically: the site from `web/` and the API from `api/`. Content edits made in
+the admin panel need no deploy.
 
 **To set it up from scratch**
 
 1. MongoDB Atlas: create a free M0 cluster and a database user, and allow network access from
    anywhere (`0.0.0.0/0`; Vercel functions have no fixed IP). Put a database name in the
    connection string, for example `...mongodb.net/portfolio`.
-2. In `api/`: `npx vercel link`, add the variables from `api/.env.example` with
-   `npx vercel env add <NAME> production`, plus `MONGOMS_DISABLE_POSTINSTALL=1`, then
-   `npx vercel deploy --prod`.
+2. Create a Vercel project with root directory `api`, connect it to the repository, add the variables from `api/.env.example` with
+   `npx vercel env add <NAME> production`, plus `MONGOMS_DISABLE_POSTINSTALL=1`.
 3. Seed the database once from your machine: put the same values in `api/.env` and run
    `npm run seed`.
-4. In `web/`: `npx vercel link`, add `NEXT_PUBLIC_API_URL` (the API address) and
-   `REVALIDATE_SECRET`, then `npx vercel deploy --prod`. Enable Web Analytics in the project
+4. Create a second Vercel project with root directory `web`, connect it to the repository and
+   add `NEXT_PUBLIC_API_URL` (the API address) and `REVALIDATE_SECRET`. Push to deploy. Enable Web Analytics in the project
    settings.
 
 Vercel serves HTTPS automatically.
