@@ -1,10 +1,14 @@
 import { ArrowLeft, ExternalLink } from 'lucide-react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Footer } from '@/components/site/Footer';
 import { Header } from '@/components/site/Header';
+import { GoogleAnalytics } from '@/components/site/GoogleAnalytics';
 import { GithubIcon } from '@/components/site/Icons';
+import { RevealController } from '@/components/site/RevealController';
+import { projectMetadata } from '@/lib/seo';
 import { fileUrl, getSite, visibleSections } from '@/lib/site';
 
 export const revalidate = 300;
@@ -15,6 +19,13 @@ export async function generateStaticParams() {
 }
 
 type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const site = await getSite();
+  const project = visibleSections(site).includes('projects') ? site.projects.find((p) => p.slug === slug) : undefined;
+  return project ? projectMetadata(site, project) : { title: 'Project not found' };
+}
 
 export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
@@ -100,6 +111,8 @@ export default async function ProjectPage({ params }: Props) {
         )}
       </main>
       <Footer site={site} />
+      <RevealController />
+      <GoogleAnalytics id={site.profile.gaMeasurementId} />
     </>
   );
 }
