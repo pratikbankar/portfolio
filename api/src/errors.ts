@@ -43,3 +43,10 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   if (!config.isTest) console.error(err);
   res.status(500).json({ error: { code: 'internal_error', message: 'Something went wrong' } });
 };
+
+/** Express 4 does not forward rejected promises to the error handler. */
+export const ah =
+  (fn: (...args: Parameters<RequestHandler>) => Promise<unknown>): RequestHandler =>
+  (req, res, next) => {
+    fn(req, res, next).catch(next);
+  };

@@ -25,3 +25,16 @@ export async function startTestApp(): Promise<TestApp> {
     },
   };
 }
+
+export const ADMIN = { email: 'admin@example.com', password: 'correct-horse-battery' };
+
+/** Creates the admin account and returns an agent that carries its session cookie. */
+export async function loginAgent(app: Express) {
+  const { createAdminUser } = await import('../src/models/AdminUser.js');
+  await createAdminUser(ADMIN.email, ADMIN.password);
+  const supertest = (await import('supertest')).default;
+  const agent = supertest.agent(app);
+  const res = await agent.post('/api/auth/login').send(ADMIN);
+  if (res.status !== 200) throw new Error(`test login failed: ${res.status}`);
+  return agent;
+}
