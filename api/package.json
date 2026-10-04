@@ -13,7 +13,8 @@
     "seed": "tsx src/seed/run.ts",
     "seed:prod": "node dist/seed/run.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "dev:memory": "tsx scripts/dev-memory.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

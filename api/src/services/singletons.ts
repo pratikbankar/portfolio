@@ -7,7 +7,7 @@ export type ProfileData = z.infer<typeof profileSchema>;
 export type SectionsData = z.infer<typeof sectionsSchema>;
 
 const KEY = { key: 'main' };
-const upsert = { upsert: true, new: true, setDefaultsOnInsert: true } as const;
+const upsert = { upsert: true, returnDocument: 'after', setDefaultsOnInsert: true } as const;
 
 function pick<K extends string>(doc: Record<string, unknown>, keys: readonly K[]): Record<K, unknown> {
   return Object.fromEntries(keys.map((k) => [k, doc[k]])) as Record<K, unknown>;

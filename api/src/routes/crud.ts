@@ -90,7 +90,7 @@ export function crudRouter(model: AnyModel, schema: ZodType, opts: CrudOptions =
         if (data.slug) data.slug = await uniqueSlug(model, String(data.slug), id);
         else delete data.slug;
       }
-      const doc = await model.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true }).lean();
+      const doc = await model.findByIdAndUpdate(id, { $set: data }, { returnDocument: 'after', runValidators: true }).lean();
       if (!doc) throw new AppError(404, 'not_found', 'Item not found');
       res.json(doc);
     }),

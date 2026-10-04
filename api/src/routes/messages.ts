@@ -53,7 +53,7 @@ export function adminMessagesRouter(): Router {
     '/:id',
     ah(async (req, res) => {
       const { read } = parseBody(messageReadSchema, req.body);
-      const doc = await ContactMessage.findByIdAndUpdate(assertId(req.params.id), { $set: { read } }, { new: true })
+      const doc = await ContactMessage.findByIdAndUpdate(assertId(req.params.id), { $set: { read } }, { returnDocument: 'after' })
         .select('-ipHash')
         .lean();
       if (!doc) throw new AppError(404, 'not_found', 'Message not found');
