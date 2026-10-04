@@ -52,6 +52,11 @@ describe('admin api client', () => {
     expect(err.fields).toEqual({ name: 'Required' });
   });
 
+  it('explains the size limit when the host rejects an upload that is too large', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('Request Entity Too Large\n\nFUNCTION_PAYLOAD_TOO_LARGE', { status: 413 })));
+    await expect(api('/admin/files', { method: 'POST', body: {} })).rejects.toThrow('Files must be 4 MB or smaller');
+  });
+
   it('gives a readable error when the server is unreachable or answers with a non-JSON page', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new TypeError('Failed to fetch'); }));
     await expect(api('/admin/skills')).rejects.toThrow(/could not reach the server/i);

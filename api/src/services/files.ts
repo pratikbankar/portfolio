@@ -6,8 +6,8 @@ import { Project } from '../models/Project.js';
 import { PublishedSnapshot } from '../models/PublishedSnapshot.js';
 
 const MB = 1024 * 1024;
-export const MAX_UPLOAD_BYTES = 10 * MB;
-const MAX_IMAGE_BYTES = 5 * MB;
+// The hosting platform caps request bodies at 4.5 MB; staying under it keeps errors readable.
+export const MAX_UPLOAD_BYTES = 4 * MB;
 
 const bucket = () => new mongoose.mongo.GridFSBucket(mongoose.connection.db!, { bucketName: 'uploads' });
 const toObjectId = (id: string) =>
@@ -36,9 +36,6 @@ export async function saveFile(buffer: Buffer, originalName: string): Promise<St
   const contentType = sniffContentType(buffer);
   if (!contentType) {
     throw new AppError(400, 'unsupported_file_type', 'Upload a JPEG, PNG, WebP or AVIF image, or a PDF');
-  }
-  if (contentType !== 'application/pdf' && buffer.length > MAX_IMAGE_BYTES) {
-    throw new AppError(413, 'payload_too_large', 'Images must be 5 MB or smaller');
   }
   // Keep only the base name, without path separators, quotes or control characters.
   const filename = (originalName.split(/[\\/]/).pop() ?? '').replace(/["\r\n\x00-\x1f]/g, '').slice(0, 150) || 'file';

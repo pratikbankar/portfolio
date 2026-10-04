@@ -53,7 +53,6 @@ export default function LoginPage() {
           {busy && <LoaderCircle className="size-4 animate-spin" aria-hidden />}
           {busy ? 'Signing in' : 'Sign in'}
         </button>
-        {busy && <p className="mt-3 text-center text-xs text-muted">This can take up to a minute if the server was idle.</p>}
       </form>
     </main>
   );

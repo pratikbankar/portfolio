@@ -13,6 +13,7 @@
   },
   "include": [
     "src",
+    "api",
     "tests",
     "scripts",
     "vitest.config.ts"

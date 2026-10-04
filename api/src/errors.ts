@@ -32,7 +32,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return;
   }
   if (e.type === 'entity.too.large' || e.code === 'LIMIT_FILE_SIZE') {
-    res.status(413).json({ error: { code: 'payload_too_large', message: 'Payload too large' } });
+    res.status(413).json({ error: { code: 'payload_too_large', message: 'Files must be 4 MB or smaller' } });
     return;
   }
   if (e.name === 'MulterError') {

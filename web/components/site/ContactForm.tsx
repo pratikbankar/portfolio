@@ -133,7 +133,6 @@ export function ContactForm({ disabled = false, fallbackEmail }: { disabled?: bo
         </button>
         <div role="status" aria-live="polite" className="text-sm">
           {disabled && <span className="text-muted">The form is switched off in preview.</span>}
-          {status === 'sending' && <span className="text-muted">This can take up to a minute if the server was idle.</span>}
           {status === 'sent' && (
             <span className="inline-flex items-center gap-1.5 text-accent">
               <Check className="size-4" aria-hidden /> Thanks, your message has been sent.

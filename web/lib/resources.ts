@@ -78,7 +78,7 @@ export const resources: Record<string, Resource> = {
       { name: 'description', label: 'Description', type: 'textarea' },
       { name: 'highlights', label: 'Highlights', type: 'list', help: 'One per line. Shown on the project page.' },
       { name: 'technologies', label: 'Technologies', type: 'list', help: 'One per line.' },
-      { name: 'imageFileIds', label: 'Screenshots', type: 'images', help: 'The first image is the card cover. JPEG, PNG, WebP or AVIF, up to 5 MB each.' },
+      { name: 'imageFileIds', label: 'Screenshots', type: 'images', help: 'The first image is the card cover. JPEG, PNG, WebP or AVIF, up to 4 MB each.' },
       { name: 'githubUrl', label: 'GitHub link', type: 'url', placeholder: 'https://github.com/...' },
       { name: 'liveUrl', label: 'Live or demo link', type: 'url', placeholder: 'https://...' },
       { name: 'featured', label: 'Featured project', type: 'boolean' },

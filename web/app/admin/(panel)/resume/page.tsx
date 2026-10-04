@@ -107,7 +107,7 @@ export default function ResumePage() {
             />
           </label>
           {id && <button type="button" className="btn btn-ghost" disabled={busy} onClick={remove}>Remove resume</button>}
-          <p className="text-sm text-muted">PDF, up to 10 MB.</p>
+          <p className="text-sm text-muted">PDF, up to 4 MB.</p>
         </div>
         {error && <p className="mt-3 text-sm text-danger" role="alert">{error}</p>}
       </div>

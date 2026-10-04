@@ -73,14 +73,15 @@ describe('file uploads', () => {
     expect(res.body.error.code).toBe('unsupported_file_type');
   });
 
-  it('rejects an image over 5 MB', async () => {
-    const res = await upload(png(5 * MB + 10), 'big.png', 'image/png');
-    expect(res.status).toBe(413);
-  });
-
-  it('accepts a PDF between 5 and 10 MB and rejects one over 10 MB', async () => {
-    expect((await upload(pdf(6 * MB), 'ok.pdf', 'application/pdf')).status).toBe(201);
-    expect((await upload(pdf(10 * MB + 10), 'big.pdf', 'application/pdf')).status).toBe(413);
+  // The hosting platform rejects request bodies over 4.5 MB, so the app enforces 4 MB itself
+  // and answers with a readable error instead of an opaque platform one.
+  it('accepts files up to 4 MB and rejects larger ones with a clear message', async () => {
+    expect((await upload(png(3 * MB), 'ok.png', 'image/png')).status).toBe(201);
+    expect((await upload(pdf(3 * MB), 'ok.pdf', 'application/pdf')).status).toBe(201);
+    for (const res of [await upload(png(4 * MB + 10), 'big.png', 'image/png'), await upload(pdf(4 * MB + 10), 'big.pdf', 'application/pdf')]) {
+      expect(res.status).toBe(413);
+      expect(res.body.error.message).toMatch(/4 MB/);
+    }
   });
 
   it('rejects a request with no file', async () => {

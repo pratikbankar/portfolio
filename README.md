@@ -16,7 +16,7 @@ web/   Next.js app on Vercel
        - /api/* is proxied to the API, so the browser only talks to one origin
    |
    v
-api/   Express REST API on Render
+api/   Express REST API, also on Vercel (as a function)
    |
    v
 MongoDB Atlas (content, uploaded files, contact messages)
@@ -117,41 +117,60 @@ Never commit `.env` files. Only the `.env.example` files are tracked.
 | `web` | `npm run lint` / `npm run typecheck` | Static checks |
 | `web` | `npm run build` | Production build |
 
-## Deploy (free tiers)
+## Deployment
 
-1. **MongoDB Atlas**: create a free M0 cluster, a database user, and allow network access from
-   anywhere (`0.0.0.0/0`, because Render's free tier has no fixed IP). Copy the connection string
-   and put a database name in it, for example `...mongodb.net/portfolio`.
-2. **Render**: New > Blueprint, pick this repository. `render.yaml` defines the service. Fill in
-   `MONGODB_URI`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` and, for now, any placeholder URL for
-   `WEB_ORIGIN`. The first start creates the admin account and loads the initial content.
-3. **Vercel**: import this repository and set the root directory to `web`. Add
-   `NEXT_PUBLIC_API_URL` (the Render URL) and `REVALIDATE_SECRET` (copy the generated value from
-   Render). Deploy, then enable Web Analytics in the project settings.
-4. Back on **Render**, set `WEB_ORIGIN` to the Vercel URL and save. The service restarts.
-5. Open `/admin` on the Vercel URL, log in, upload your photo and resume, and press Publish.
+Live site: https://pratik-bankar-portfolio.vercel.app (admin at `/admin`).
 
-Both hosts serve HTTPS automatically.
+Everything runs on free tiers, with no card required:
 
-**Adding a custom domain later**: add the domain in the Vercel project, then set
-`NEXT_PUBLIC_SITE_URL` on Vercel and `WEB_ORIGIN` on Render to `https://your-domain` and redeploy
-both. No code changes are needed.
+| Part | Where | Vercel project |
+|---|---|---|
+| Site and admin panel | Vercel | `pratik-bankar-portfolio` (root `web/`) |
+| API | Vercel function | `pratik-bankar-portfolio-api` (root `api/`, entry `api/api/index.ts`) |
+| Database | MongoDB Atlas, free M0 cluster | |
 
-**Free tier limits to know**
+The API was first planned for Render (`render.yaml` is kept for that option), but Render asks
+for a card even on its free plan. Running it as a Vercel function needs no card and has no
+long sleep, at the cost of a 4 MB upload limit.
 
-- Render's free service sleeps after about 15 minutes without traffic and takes 30 to 60 seconds
-  to wake. Public pages are cached on Vercel, so visitors are not affected. The first admin login
-  or contact form submission after a quiet period is slow.
-- If the API is unreachable, the site keeps serving the last published pages. Images and the
-  resume download are served by the API, so they are slow on the first visit after a sleep.
-- **Recommended**: keep the API awake with a free uptime monitor (for example UptimeRobot or
-  cron-job.org) that requests `https://<your-render-url>/api/health` every 10 minutes. This
-  removes the slow first login, the slow first image and the slow first contact message.
+**To deploy a change**, from the repository root:
+
+```bash
+cd api && npx vercel deploy --prod     # API
+cd web && npx vercel deploy --prod     # site and admin panel
+```
+
+**To set it up from scratch**
+
+1. MongoDB Atlas: create a free M0 cluster and a database user, and allow network access from
+   anywhere (`0.0.0.0/0`; Vercel functions have no fixed IP). Put a database name in the
+   connection string, for example `...mongodb.net/portfolio`.
+2. In `api/`: `npx vercel link`, add the variables from `api/.env.example` with
+   `npx vercel env add <NAME> production`, plus `MONGOMS_DISABLE_POSTINSTALL=1`, then
+   `npx vercel deploy --prod`.
+3. Seed the database once from your machine: put the same values in `api/.env` and run
+   `npm run seed`.
+4. In `web/`: `npx vercel link`, add `NEXT_PUBLIC_API_URL` (the API address) and
+   `REVALIDATE_SECRET`, then `npx vercel deploy --prod`. Enable Web Analytics in the project
+   settings.
+
+Vercel serves HTTPS automatically.
+
+**Adding a custom domain later**: add the domain to the `pratik-bankar-portfolio` project in
+Vercel, set `NEXT_PUBLIC_SITE_URL` there and `WEB_ORIGIN` on the API project to
+`https://your-domain`, and redeploy both. No code changes are needed.
+
+**Limits to know**
+
+- Uploads (images and the resume PDF) can be at most 4 MB each.
+- Rate limits are counted per running function instance, so they are approximate.
+- If the API is unreachable, the site keeps serving the last published pages.
 
 ## Forgotten admin password
 
-Set a new `ADMIN_PASSWORD` on Render, change the start command once to
-`node dist/seed/run.js --reset-password && npm start`, deploy, then change it back.
+Put the production values in `api/.env` with a new `ADMIN_PASSWORD`, then run
+`npm run seed -- --reset-password` in `api/`. Update `ADMIN_PASSWORD` on the Vercel API project
+to match.
 
 ## Project layout
 
@@ -172,5 +191,5 @@ web/
   components/admin/   Admin shell, editor, uploads
   lib/                Data loading, SEO, admin API client, collection definitions
 docs/superpowers/     Design spec and implementation plan
-render.yaml           Render service definition
+render.yaml           Optional: run the API on Render instead of Vercel
 ```

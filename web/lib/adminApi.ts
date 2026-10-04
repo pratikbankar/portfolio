@@ -44,8 +44,12 @@ export async function api<T = unknown>(path: string, { method = 'GET', body }: O
   }
 
   const error = data?.error as { message?: string; details?: Array<{ path: string; message: string }> } | undefined;
+  if (!error?.message && res.status === 413) {
+    // The hosting platform rejects oversized bodies itself, before the API can answer.
+    throw new ApiError(413, 'Files must be 4 MB or smaller');
+  }
   if (!error?.message) {
-    throw new ApiError(res.status, `Server error (${res.status}). The server may be waking up; try again in a minute.`);
+    throw new ApiError(res.status, `Server error (${res.status}). Please try again in a moment.`);
   }
   const fields = Object.fromEntries((error.details ?? []).map((d) => [d.path.split('.')[0], d.message]));
   throw new ApiError(res.status, error.message, fields);
