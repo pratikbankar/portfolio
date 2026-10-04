@@ -7,6 +7,7 @@ import { errorHandler, notFound } from './errors.js';
 import { adminRouter } from './routes/admin.js';
 import { authRouter } from './routes/auth.js';
 import { publicFilesRouter } from './routes/files.js';
+import { publicRouter } from './routes/public.js';
 
 export function createApp(): Express {
   const app = express();
@@ -26,6 +27,7 @@ export function createApp(): Express {
   app.use('/api/auth', authRouter());
   app.use('/api/admin', adminRouter());
   app.use('/api/files', publicFilesRouter());
+  app.use('/api', publicRouter());
 
   app.use(notFound);
   app.use(errorHandler);

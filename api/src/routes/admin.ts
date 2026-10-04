@@ -13,6 +13,7 @@ import {
   awardSchema, certificationSchema, educationSchema, experienceSchema,
   profileSchema, projectSchema, sectionsSchema, skillSchema, socialLinkSchema,
 } from '../schemas.js';
+import { buildDraft, getDashboard, publish } from '../services/publish.js';
 import { getProfile, getSections, saveProfile, saveSections } from '../services/singletons.js';
 import { crudRouter } from './crud.js';
 import { adminFilesRouter } from './files.js';
@@ -36,6 +37,10 @@ export function adminRouter(): Router {
 
   router.get('/sections', ah(async (_req, res) => res.json(await getSections())));
   router.put('/sections', ah(async (req, res) => res.json(await saveSections(parseBody(sectionsSchema, req.body)))));
+
+  router.get('/preview', ah(async (_req, res) => res.json(await buildDraft())));
+  router.post('/publish', ah(async (_req, res) => res.json(await publish())));
+  router.get('/dashboard', ah(async (_req, res) => res.json(await getDashboard())));
 
   return router;
 }
