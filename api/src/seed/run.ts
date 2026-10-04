@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import type { Model } from 'mongoose';
 import type { ZodType } from 'zod';
@@ -19,6 +20,7 @@ import {
   awardSchema, certificationSchema, educationSchema, experienceSchema,
   profileSchema, projectSchema, skillSchema, socialLinkSchema,
 } from '../schemas.js';
+import { saveFile } from '../services/files.js';
 import { COLLECTIONS, publish } from '../services/publish.js';
 import { saveProfile } from '../services/singletons.js';
 import * as content from './content.js';
@@ -66,7 +68,10 @@ export async function seed(options: SeedOptions = {}): Promise<{ seeded: boolean
     ]);
   }
 
-  await saveProfile(parseBody(profileSchema, content.profile));
+  // api/assets sits two levels up from both src/seed and dist/seed.
+  const photo = await readFile(new URL('../../assets/profile.png', import.meta.url)).catch(() => null);
+  const photoFileId = photo ? (await saveFile(photo, 'pratik-bankar.png')).id : '';
+  await saveProfile(parseBody(profileSchema, { ...content.profile, photoFileId }));
   const skillItems = Object.entries(content.skills).flatMap(([category, names]) =>
     names.map((name) => ({ name, category })),
   );

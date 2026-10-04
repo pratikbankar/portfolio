@@ -42,6 +42,15 @@ describe('seed', () => {
     expect(c.socialLinks.map((l: any) => l.platform)).toEqual(['LinkedIn', 'GitHub', 'Email']);
   });
 
+  it('publishes the profile photo', async () => {
+    await seed();
+    const { photoFileId } = (await site()).profile;
+    expect(photoFileId).toMatch(/^[a-f0-9]{24}$/);
+    const res = await request(t.app).get(`/api/files/${photoFileId}`);
+    expect(res.status).toBe(200);
+    expect(res.headers['content-type']).toBe('image/png');
+  });
+
   it('never publishes the phone number or date of birth', async () => {
     await seed();
     const json = JSON.stringify(await site());
