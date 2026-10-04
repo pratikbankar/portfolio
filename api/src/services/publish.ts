@@ -67,6 +67,18 @@ async function revalidateWeb(): Promise<boolean> {
   }
 }
 
+/**
+ * A publish clears the cached pages, so the next visit has to rebuild them from this API.
+ * Requesting them now, while the API is certainly awake, means no visitor pays for that
+ * rebuild later when the free server may be asleep. Fire and forget: failures do not matter.
+ */
+function warmPages(content: SiteContent): void {
+  const paths = ['/', ...content.projects.map((p) => `/projects/${String(p.slug)}`)];
+  for (const path of paths) {
+    void fetch(`${config.WEB_ORIGIN}${path}`, { signal: AbortSignal.timeout(20000) }).catch(() => undefined);
+  }
+}
+
 export async function publish(): Promise<{ publishedAt: Date; revalidated: boolean }> {
   const content = await buildDraft();
   const publishedAt = new Date();
@@ -78,7 +90,9 @@ export async function publish(): Promise<{ publishedAt: Date; revalidated: boole
   // Draft and published content are now identical, so anything neither refers to is safe to remove.
   await removeUnusedFiles(content).catch(() => 0);
   // The snapshot is already saved; a failed cache refresh must not fail the publish.
-  return { publishedAt, revalidated: await revalidateWeb() };
+  const revalidated = await revalidateWeb();
+  if (revalidated) warmPages(content);
+  return { publishedAt, revalidated };
 }
 
 async function getSnapshot(): Promise<{ content: SiteContent; publishedAt: Date } | null> {

@@ -134,6 +134,20 @@ describe('publish flow', () => {
     expect(init.headers['x-revalidate-secret']).toBe('test-revalidate-secret');
   });
 
+  it('warms the public pages after publishing, while the API is known to be awake', async () => {
+    await agent.post('/api/admin/projects').send({ title: 'Quattr' });
+    await agent.post('/api/admin/publish');
+    const urls = fetchMock.mock.calls.map((c) => String(c[0]));
+    expect(urls).toContain('http://web.invalid/');
+    expect(urls).toContain('http://web.invalid/projects/quattr');
+  });
+
+  it('does not warm pages when the web app could not be told to refresh', async () => {
+    fetchMock.mockRejectedValue(new Error('down'));
+    await agent.post('/api/admin/publish');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('still publishes when the web app cannot be reached', async () => {
     fetchMock.mockRejectedValue(new Error('connect ECONNREFUSED'));
     await addSkill('React');

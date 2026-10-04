@@ -46,11 +46,14 @@ describe('homeMetadata', () => {
     expect(meta.twitter).toMatchObject({ card: 'summary_large_image' });
   });
 
-  it('uses the generated preview card when no photo is uploaded, and the photo when there is one', () => {
-    expect(homeMetadata(site).openGraph?.images).toEqual(['/opengraph-image']);
+  it('always uses the preview card generated on this site, never an image served by the API', () => {
+    // The API may be asleep when a social network fetches the preview, so it must not depend on it.
     const withPhoto = { ...site, profile: { ...site.profile, photoFileId: 'a'.repeat(24) } };
-    expect(String((homeMetadata(withPhoto).openGraph?.images as string[])[0])).toContain('/api/files/' + 'a'.repeat(24));
-    expect(projectMetadata(site, project).openGraph?.images).toEqual(['/opengraph-image']);
+    const withShot = { ...project, imageFileIds: ['b'.repeat(24)] };
+    expect(homeMetadata(site).openGraph?.images).toEqual(['/opengraph-image']);
+    expect(homeMetadata(withPhoto).openGraph?.images).toEqual(['/opengraph-image']);
+    expect(projectMetadata(site, withShot).openGraph?.images).toEqual(['/opengraph-image']);
+    expect(projectMetadata(site, withShot).twitter?.images).toEqual(['/opengraph-image']);
   });
 
   it('still produces a title when the profile is empty', () => {

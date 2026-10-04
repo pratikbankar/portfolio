@@ -142,7 +142,11 @@ both. No code changes are needed.
 - Render's free service sleeps after about 15 minutes without traffic and takes 30 to 60 seconds
   to wake. Public pages are cached on Vercel, so visitors are not affected. The first admin login
   or contact form submission after a quiet period is slow.
-- If the API is unreachable, the site keeps serving the last published pages.
+- If the API is unreachable, the site keeps serving the last published pages. Images and the
+  resume download are served by the API, so they are slow on the first visit after a sleep.
+- **Recommended**: keep the API awake with a free uptime monitor (for example UptimeRobot or
+  cron-job.org) that requests `https://<your-render-url>/api/health` every 10 minutes. This
+  removes the slow first login, the slow first image and the slow first contact message.
 
 ## Forgotten admin password
 

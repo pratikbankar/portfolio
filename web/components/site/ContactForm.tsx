@@ -56,7 +56,7 @@ export function ContactForm({ disabled = false, fallbackEmail }: { disabled?: bo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...values,
-          website: String(data.get('website') ?? ''),
+          extra_notes: String(data.get('extra_notes') ?? ''),
           elapsedMs: Math.round(performance.now() - startedAt.current),
         }),
       });
@@ -119,8 +119,9 @@ export function ContactForm({ disabled = false, fallbackEmail }: { disabled?: bo
       {/* Honeypot: people never see or reach this field; bots that fill it are discarded. */}
       <div className="hp-field" aria-hidden="true">
         <label>
-          Website
-          <input name="website" type="text" tabIndex={-1} autoComplete="off" />
+          Leave this field empty
+          {/* A neutral name, so browser and password-manager autofill never fills it for a real visitor. */}
+          <input name="extra_notes" type="text" tabIndex={-1} autoComplete="off" />
         </label>
       </div>
 

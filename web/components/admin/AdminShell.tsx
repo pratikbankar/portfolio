@@ -7,7 +7,8 @@ import {
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import { api, type Dashboard } from '@/lib/adminApi';
+import { api, ApiError, type Dashboard } from '@/lib/adminApi';
+import { LoadError } from './ui';
 import { ThemeToggle } from '../site/ThemeToggle';
 
 interface Toast {
@@ -51,6 +52,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
   const [status, setStatus] = useState<Dashboard | null>(null);
+  const [loadError, setLoadError] = useState('');
+  const [attempt, setAttempt] = useState(0);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [publishing, setPublishing] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -78,11 +81,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
         setEmail(me.email);
         return refresh();
       })
-      .catch(() => undefined);
+      .catch((err: unknown) => {
+        // A 401 is already on its way to the login page; anything else needs a visible retry.
+        if (alive && !(err instanceof ApiError && err.status === 401)) {
+          setLoadError(err instanceof Error ? err.message : 'Could not load the admin panel');
+        }
+      });
     return () => {
       alive = false;
     };
-  }, [refresh]);
+  }, [refresh, attempt]);
 
   async function publish() {
     setPublishing(true);
@@ -104,6 +112,22 @@ export function AdminShell({ children }: { children: ReactNode }) {
   async function logout() {
     await api('/auth/logout', { method: 'POST' }).catch(() => undefined);
     router.replace('/admin/login');
+  }
+
+  if (!email && loadError) {
+    return (
+      <div className="grid flex-1 place-items-center px-4">
+        <div className="w-full max-w-md">
+          <LoadError
+            message={loadError}
+            onRetry={() => {
+              setLoadError('');
+              setAttempt((n) => n + 1);
+            }}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (!email) {

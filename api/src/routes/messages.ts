@@ -10,10 +10,10 @@ import { assertId } from './crud.js';
 
 const MIN_FILL_MS = 3000;
 
-/** Bots fill the hidden "website" field or submit faster than a person can type. */
+/** Bots fill the hidden "extra_notes" field or submit faster than a person can type. */
 function looksAutomated(body: unknown): boolean {
   const b = (body ?? {}) as Record<string, unknown>;
-  if (typeof b.website === 'string' && b.website.trim() !== '') return true;
+  if (typeof b.extra_notes === 'string' && b.extra_notes.trim() !== '') return true;
   return typeof b.elapsedMs !== 'number' || !Number.isFinite(b.elapsedMs) || b.elapsedMs < MIN_FILL_MS;
 }
 

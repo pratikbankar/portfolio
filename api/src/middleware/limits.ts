@@ -28,9 +28,20 @@ const limiter = (windowMs: number, limit: number, message: string, keyGenerator?
     },
   });
 
-// Keyed on the connecting address, which cannot be forged: this one guards the password.
+const byVisitor = (req: Request) => ipKeyGenerator(visitorIp(req));
+
+/**
+ * Each route gets two limits. The strict one counts per visitor, so one person cannot use up
+ * everyone's allowance (or lock the owner out of the login). The looser one counts per
+ * connecting address, which cannot be forged, and caps anyone who fakes the visitor header.
+ */
+const pair = (windowMs: number, perVisitor: number, perAddress: number, message: string) => [
+  limiter(windowMs, perAddress, message),
+  limiter(windowMs, perVisitor, message, byVisitor),
+];
+
 export const createLoginLimiter = () =>
-  limiter(15 * 60 * 1000, 5, 'Too many login attempts. Try again in 15 minutes.');
+  pair(15 * 60 * 1000, 5, 30, 'Too many login attempts. Try again in 15 minutes.');
 
 export const createContactLimiter = () =>
-  limiter(60 * 60 * 1000, 5, 'Too many messages sent. Please try again later.', (req) => ipKeyGenerator(visitorIp(req)));
+  pair(60 * 60 * 1000, 5, 60, 'Too many messages sent. Please try again later.');

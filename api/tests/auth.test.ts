@@ -111,6 +111,23 @@ describe('auth', () => {
     expect(user!.passwordHash).toMatch(/^\$2[aby]\$12\$/);
   });
 
+  it('limits each visitor separately behind the web proxy, so one person cannot lock the owner out', async () => {
+    const attempt = (visitor: string) =>
+      request(t.app)
+        .post('/api/auth/login')
+        .set('x-test-ratelimit', '1')
+        .set('X-Forwarded-For', `${visitor}, 76.76.21.21`)
+        .send({ email: ADMIN.email, password: 'wrong-password-123' });
+    for (let i = 0; i < 5; i++) expect((await attempt('203.0.113.7')).status).toBe(401);
+    expect((await attempt('203.0.113.7')).status).toBe(429);
+    const owner = await request(t.app)
+      .post('/api/auth/login')
+      .set('x-test-ratelimit', '1')
+      .set('X-Forwarded-For', '198.51.100.9, 76.76.21.21')
+      .send(ADMIN);
+    expect(owner.status).toBe(200);
+  });
+
   it('rate limits repeated login attempts', async () => {
     const attempt = () =>
       request(t.app)

@@ -22,7 +22,7 @@ const valid = {
   email: 'asha@example.com',
   subject: 'Role at Acme',
   message: 'Hello Pratik, we would like to talk about a role.',
-  website: '',
+  extra_notes: '',
   elapsedMs: 9000,
 };
 const send = (body: object) => request(t.app).post('/api/contact').send(body);
@@ -66,7 +66,7 @@ describe('contact form', () => {
   });
 
   it('silently drops a submission that fills the honeypot', async () => {
-    const res = await send({ ...valid, website: 'http://spam.example' });
+    const res = await send({ ...valid, extra_notes: 'http://spam.example' });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ ok: true });
     expect(await stored()).toBe(0);
@@ -109,6 +109,15 @@ describe('contact rate limit behind the web proxy', () => {
     for (let i = 0; i < 5; i++) expect((await from('203.0.113.7')).status).toBe(200);
     expect((await from('203.0.113.7')).status).toBe(429);
     expect((await from('198.51.100.9')).status).toBe(200);
+  });
+});
+
+describe('contact rate limit for direct callers', () => {
+  it('caps a caller who forges a new visitor address on every request', async () => {
+    const forged = (n: number) =>
+      send(valid).set('x-test-ratelimit', '1').set('X-Forwarded-For', `10.0.${Math.floor(n / 250)}.${n % 250}, 192.0.2.50`);
+    for (let i = 0; i < 60; i++) expect((await forged(i)).status).toBe(200);
+    expect((await forged(60)).status).toBe(429);
   });
 });
 
