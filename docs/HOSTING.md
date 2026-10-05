@@ -47,6 +47,19 @@ in `~/.config/portfolio-deploy/` on the deploy Mac and in the Vercel project set
 The Google API key should be restricted to the PageSpeed Insights API only (Google Cloud,
 APIs and Services, Credentials, edit the key). The free quota is far above what the demo uses.
 
+## Third project: API Mock Studio
+
+| What | Where |
+|---|---|
+| Live demo | https://api-mock-studio-pratik.vercel.app |
+| Source code | https://github.com/pratikbankar/api-mock-studio (public) |
+| Hosting | Vercel project `api-mock-studio-pratik`, same team, Hobby plan, auto-deploys on push to `main` |
+| Database | Database `mocks` on the same free Atlas cluster |
+
+It needs no API keys. Its only secret is the database connection string, kept in the Vercel
+project settings. Workspaces unused for 30 days are deleted automatically, so its storage
+stays small.
+
 ## Admin login
 
 - Email: `pratikbankar88@gmail.com`
