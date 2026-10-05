@@ -1,7 +1,7 @@
 # Hosting, accounts and costs
 
 Everything about where this site runs, how to manage it, and what is and is not free.
-Written on 2026-10-04. No passwords or secret keys are in this file or anywhere in the repository.
+Written on 2026-10-04, updated 2026-10-05. No passwords or secret keys are in this file or anywhere in the repository.
 
 ## Live addresses
 
@@ -27,6 +27,25 @@ Both Vercel projects are in the team "Pratik Portfolio". All accounts are under
 An older Atlas cluster named `Portfollio` exists in "Project 0". This site does not use it.
 A Render account was created during setup but nothing runs there (Render asks for a card even
 on its free plan), so it can be ignored or deleted.
+
+## Second project: Web Vitals Monitor
+
+A separate project shown on the portfolio, with its own repository and deployment.
+
+| What | Where |
+|---|---|
+| Live demo | https://web-vitals-monitor-pratik.vercel.app |
+| Source code | https://github.com/pratikbankar/web-vitals-monitor (public) |
+| Hosting | Vercel project `web-vitals-monitor-pratik`, same team, Hobby plan, auto-deploys on push to `main` |
+| Database | Database `vitals` on the same free Atlas cluster as the portfolio |
+| Audits | Google PageSpeed Insights API, free, using an API key from the Google Cloud project `web-vitals-monitor` |
+| Daily re-audit | Vercel Cron, once a day at 03:00 UTC |
+
+Its secrets (Google API key, admin key, cron secret) are kept the same way as the portfolio's:
+in `~/.config/portfolio-deploy/` on the deploy Mac and in the Vercel project settings.
+
+The Google API key should be restricted to the PageSpeed Insights API only (Google Cloud,
+APIs and Services, Credentials, edit the key). The free quota is far above what the demo uses.
 
 ## Admin login
 
